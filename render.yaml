@@ -4,9 +4,10 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn server.main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11
-      - key: ENV
-        value: production
+    # 环境变量是可选的，不需要可以删除整个 envVars 部分
+    # envVars:
+    #   - key: PYTHON_VERSION
+    #     value: 3.11
+    #   - key: ENV
+    #     value: production
 
