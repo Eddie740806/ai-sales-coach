@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 銷售教練平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 登录模态框 -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-circle"></i> 用戶登入</h2>
+                <button class="modal-close" id="close-login">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="login-form-view">
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label>用戶名</label>
+                            <input type="text" id="login-username" required autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label>密碼</label>
+                            <input type="password" id="login-password" required autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">
+                            <i class="fas fa-sign-in-alt"></i> 登入
+                        </button>
+                    </form>
+                    <div class="modal-footer">
+                        <p>還沒有帳號？ <a href="#" id="show-register">立即註冊</a></p>
+                    </div>
+                </div>
+                
+                <div id="register-form-view" style="display: none;">
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label>用戶名 *</label>
+                            <input type="text" id="register-username" required autocomplete="username">
+                            <small>3-50個字符，只能包含字母、數字、下劃線和連字符</small>
+                        </div>
+                        <div class="form-group">
+                            <label>密碼 *</label>
+                            <input type="password" id="register-password" required autocomplete="new-password">
+                            <small>至少6個字符</small>
+                        </div>
+                        <div class="form-group">
+                            <label>電子郵件（可選）</label>
+                            <input type="email" id="register-email" autocomplete="email">
+                        </div>
+                        <div class="form-group">
+                            <label>姓名（可選）</label>
+                            <input type="text" id="register-fullname" autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label>角色</label>
+                            <select id="register-role">
+                                <option value="sales">業務員</option>
+                                <option value="trainer">培訓師</option>
+                                <option value="admin">管理員</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">
+                            <i class="fas fa-user-plus"></i> 註冊
+                        </button>
+                    </form>
+                    <div class="modal-footer">
+                        <p>已有帳號？ <a href="#" id="show-login">返回登入</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-robot"></i>
+                <span>AI 銷售教練</span>
+            </div>
+            <div class="nav-menu">
+                <button class="nav-btn active" data-page="chat">
+                    <i class="fas fa-comments"></i> 對話教練
+                </button>
+                <button class="nav-btn" data-page="knowledge">
+                    <i class="fas fa-book"></i> 知識庫
+                </button>
+                <button class="nav-btn" data-page="scripts">
+                    <i class="fas fa-file-alt"></i> 話術生成
+                </button>
+                <button class="nav-btn" data-page="dashboard">
+                    <i class="fas fa-chart-bar"></i> 數據統計
+                </button>
+                <button class="nav-btn" data-page="insights">
+                    <i class="fas fa-lightbulb"></i> 學習洞察
+                </button>
+            </div>
+            <div class="nav-user">
+                <span id="user-info" style="display: none;">
+                    <i class="fas fa-user"></i> <span id="username-display"></span>
+                </span>
+                <button id="logout-btn" class="btn-logout" style="display: none;">
+                    <i class="fas fa-sign-out-alt"></i> 登出
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 对话页面 -->
+        <div id="chat-page" class="page active">
+            <div class="page-header">
+                <h1><i class="fas fa-comments"></i> AI 銷售教練對話</h1>
+                <p>隨時向AI教練提問，獲得專業建議</p>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-config">
+                    <div class="form-group">
+                        <label>用戶信息</label>
+                        <input type="text" id="sales-id" value="" placeholder="自動使用登入用戶" disabled style="background: var(--bg-color);">
+                    </div>
+                    <div class="form-group">
+                        <label>客戶類型（可選）</label>
+                        <select id="customer-type">
+                            <option value="">通用</option>
+                            <option value="中小企業">中小企業</option>
+                            <option value="大企業">大企業</option>
+                            <option value="個人客戶">個人客戶</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <div class="welcome-message">
+                        <i class="fas fa-robot"></i>
+                        <h3>歡迎使用 AI 銷售教練</h3>
+                        <p>我是您的AI銷售教練，可以幫您：</p>
+                        <ul>
+                            <li>解決銷售過程中的問題</li>
+                            <li>提供專業建議和話術</li>
+                            <li>持續學習改進</li>
+                        </ul>
+                        <p>試試問我：「客戶說價格太貴，我該怎麼回應？」</p>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <input type="text" id="chat-input" placeholder="輸入您的問題..." autocomplete="off">
+                        <button id="send-btn" class="send-btn">
+                            <i class="fas fa-paper-plane"></i> 傳送
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 知识库页面 -->
+        <div id="knowledge-page" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-book"></i> 知識庫管理</h1>
+                <p>培訓師可以新增和管理培訓內容</p>
+            </div>
+
+            <div class="knowledge-container">
+                <div class="knowledge-sidebar">
+                    <div class="add-content-card">
+                        <h3><i class="fas fa-plus-circle"></i> 新增內容</h3>
+                        <form id="add-content-form">
+                            <div class="form-group">
+                                <label>標題</label>
+                                <input type="text" id="content-title" required>
+                            </div>
+                            <div class="form-group">
+                                <label>內容</label>
+                                <textarea id="content-text" rows="6" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>類型</label>
+                                <select id="content-type" required>
+                                    <option value="training_material">培訓材料</option>
+                                    <option value="sales_script">銷售話術</option>
+                                    <option value="qa">問答對</option>
+                                    <option value="best_practice">最佳實踐</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>標籤（用逗號分隔）</label>
+                                <input type="text" id="content-tags" placeholder="價格,異議處理">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 儲存內容
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="knowledge-main">
+                    <div class="search-bar">
+                        <input type="text" id="search-query" placeholder="搜尋培訓內容...">
+                        <button id="search-btn" class="btn btn-primary">
+                            <i class="fas fa-search"></i> 搜尋
+                        </button>
+                    </div>
+
+                    <div id="knowledge-results" class="knowledge-results">
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>輸入關鍵詞搜尋培訓內容</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 话术生成页面 -->
+        <div id="scripts-page" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-file-alt"></i> 話術生成器</h1>
+                <p>AI輔助生成銷售話術</p>
+            </div>
+
+            <div class="scripts-container">
+                <div class="script-generator">
+                        <h3><i class="fas fa-magic"></i> 生成新話術</h3>
+                    <form id="generate-script-form">
+                        <div class="form-group">
+                            <label>使用場景 *</label>
+                            <input type="text" id="script-scenario" placeholder="例如：價格異議處理" required>
+                        </div>
+                        <div class="form-group">
+                            <label>客戶類型</label>
+                            <select id="script-customer-type">
+                                <option value="">通用</option>
+                                <option value="中小企業">中小企業</option>
+                                <option value="大企業">大企業</option>
+                                <option value="個人客戶">個人客戶</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>特殊要求</label>
+                            <textarea id="script-requirements" rows="3" placeholder="例如：需要強調價值而非價格"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">
+                            <i class="fas fa-sparkles"></i> 生成話術
+                        </button>
+                    </form>
+                </div>
+
+                <div id="script-results" class="script-results">
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <p>填寫表單並點擊「生成話術」開始</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据统计页面 -->
+        <div id="dashboard-page" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-chart-bar"></i> 數據統計</h1>
+                <p>平台整體數據概覽</p>
+            </div>
+
+            <div id="dashboard-content" class="dashboard-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-conversations">-</div>
+                            <div class="stat-label">總對話數</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-sales">-</div>
+                            <div class="stat-label">活躍業務員</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-content">-</div>
+                            <div class="stat-label">培訓內容</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-scripts">-</div>
+                            <div class="stat-label">話術數量</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h3><i class="fas fa-star"></i> 表現最佳的話術</h3>
+                    <div id="top-scripts" class="top-scripts-list">
+                        <div class="loading">載入中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 学习洞察页面 -->
+        <div id="insights-page" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-lightbulb"></i> 學習洞察</h1>
+                <p>獲取個人化訓練建議</p>
+            </div>
+
+            <div class="insights-container">
+                <div class="insights-form">
+                    <div class="form-group">
+                        <label>業務員ID</label>
+                        <input type="text" id="insights-sales-id" value="sales_001" placeholder="輸入業務員ID">
+                        <button id="load-insights-btn" class="btn btn-primary">
+                            <i class="fas fa-search"></i> 查看洞察
+                        </button>
+                    </div>
+                </div>
+
+                <div id="insights-content" class="insights-content">
+                    <div class="empty-state">
+                        <i class="fas fa-lightbulb"></i>
+                        <p>輸入業務員ID並點擊「查看洞察」</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 加载提示 -->
+    <div id="loading" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>處理中...</p>
+        </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+
